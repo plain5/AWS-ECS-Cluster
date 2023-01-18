@@ -22,7 +22,7 @@ is a list and what they do.
 
 ## Important information ##
 * Variables *DATABASE_URL* & *DJANGO_SECRET_KEY* are stored in the Parameter Store in the same region as the infrastructure is provisioned.
-* *DJANGO_SECRET_KEY* has the following format : `postgres://YourUserName:YourPassword@YourHostname:5432/YourDatabaseName` (since I wasn't creating a real production project, I used an EC2 instance to host the Postgres database. Personally, I think you can better use AWS RDS for this purpose).
+* *DATABASE_URL* has the following format : `postgres://YourUserName:YourPassword@YourHostname:5432/YourDatabaseName` (since I wasn't creating a real production project, I used an EC2 instance to host the Postgres database. Personally, I think you can better use AWS RDS for this purpose).
 * `ecsTaskExecutionRole` for the task definition has the following policies : *AmazonECSTaskExecutionRolePolicy* and two `manually added` to enable access to the Parameter Store SecureString parameters. How to do it you can find out here : [AWS Systems Manager Parameter Store - Use Credentials with ECS Environment Variables (Hands-On)](https://www.youtube.com/watch?v=a6B9nF9nBiY).
 * Don't forget to `Enable dynamic config using setup workflows` in the CircleCI project. For this, go to the *Project Settings* -> *Advanced* -> activate *Enable dynamic config using setup workflows*.
 * Elastic Container Registry repository, *ecsTaskExecutionRole* and variables *DATABASE_URL* & *DJANGO_SECRET_KEY* are created manually (they are independent of Terraform!).
