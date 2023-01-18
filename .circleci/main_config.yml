@@ -1,0 +1,273 @@
+---
+version: '2.1'
+
+
+orbs:
+  aws-ecr: circleci/aws-ecr@8.2.1
+
+
+parameters:
+
+  create-infrastructure:
+    type: boolean
+    default: false
+
+  update-docker-image:
+    type: boolean
+    default: false
+
+  delete-infrastructure:
+    type: boolean
+    default: false
+
+
+
+
+jobs:
+
+  terraform-init-validate-plan:
+    executor: aws-ecr/default
+
+    steps:
+
+      - checkout
+
+
+      - run: 
+          name: Download Terraform
+          command: wget https://releases.hashicorp.com/terraform/1.3.5/terraform_1.3.5_linux_amd64.zip
+
+
+      - run:
+          name: Install Terraform
+          command: sudo unzip terraform_1.3.5_linux_amd64.zip -d /usr/local/bin
+
+
+      - run:
+          name: terraform init
+          path: /home/circleci/project/infrastructure
+          command: export LATEST_IMAGE_TAG="$(aws ecr describe-images --repository-name django-app --region ${REGION} --query 'sort_by(imageDetails,& imagePushedAt)[-1].imageTags[0]' --output text)" && terraform init -var="certificate_arn=$CERTIFICATE_ARN" -var="account_id=$ACCOUNT_ID" -var="ecr_uri=${ECR_URI}:${LATEST_IMAGE_TAG}" -var="region=$REGION" -backend-config="bucket=$BUCKET" -backend-config="key=$FOLDER/terraform.tfstate"
+
+
+      - run:
+          name: terraform validate
+          path: /home/circleci/project/infrastructure
+          command: terraform validate
+
+
+      - run:
+          name: terraform plan
+          path: /home/circleci/project/infrastructure
+          command: export LATEST_IMAGE_TAG="$(aws ecr describe-images --repository-name django-app --region ${REGION} --query 'sort_by(imageDetails,& imagePushedAt)[-1].imageTags[0]' --output text)" && terraform plan -var="certificate_arn=$CERTIFICATE_ARN" -var="region=$REGION" -var="account_id=$ACCOUNT_ID" -var="ecr_uri=${ECR_URI}:${LATEST_IMAGE_TAG}"
+
+
+
+
+  terraform-apply:
+    executor: aws-ecr/default
+
+    steps:
+
+      - checkout
+
+
+      - run: 
+          name: Download Terraform
+          command: wget https://releases.hashicorp.com/terraform/1.3.5/terraform_1.3.5_linux_amd64.zip
+
+
+      - run:
+          name: Install Terraform
+          command: sudo unzip terraform_1.3.5_linux_amd64.zip -d /usr/local/bin
+
+
+      - run:
+          name: terraform init
+          path: /home/circleci/project/infrastructure
+          command: export LATEST_IMAGE_TAG="$(aws ecr describe-images --repository-name django-app --region ${REGION} --query 'sort_by(imageDetails,& imagePushedAt)[-1].imageTags[0]' --output text)" && terraform init -var="certificate_arn=$CERTIFICATE_ARN" -var="region=$REGION" -var="account_id=$ACCOUNT_ID" -var="ecr_uri=${ECR_URI}:${LATEST_IMAGE_TAG}" -backend-config="bucket=$BUCKET" -backend-config="key=$FOLDER/terraform.tfstate"
+
+
+      - run:
+          name: terraform apply
+          path: /home/circleci/project/infrastructure
+          command: export LATEST_IMAGE_TAG="$(aws ecr describe-images --repository-name django-app --region ${REGION} --query 'sort_by(imageDetails,& imagePushedAt)[-1].imageTags[0]' --output text)" && terraform apply -var="certificate_arn=$CERTIFICATE_ARN" -var="account_id=$ACCOUNT_ID" -var="region=$REGION" -var="ecr_uri=${ECR_URI}:${LATEST_IMAGE_TAG}" -auto-approve 
+  
+
+
+
+  terratest:
+
+    docker:
+      - image: cimg/go:1.19.4
+
+    steps:
+
+      - checkout
+
+
+      - run: 
+          name: Download Terraform
+          command: wget https://releases.hashicorp.com/terraform/1.3.5/terraform_1.3.5_linux_amd64.zip
+
+
+      - run:
+          name: Install Terraform
+          command: sudo unzip terraform_1.3.5_linux_amd64.zip -d /usr/local/bin
+
+
+      - run:
+          name: Mod init
+          path: /home/circleci/project/infrastructure
+          command: go mod init mytests
+
+
+      - run: 
+          name: Mod tidy
+          path: /home/circleci/project/infrastructure
+          command: go mod tidy
+
+
+      - run: 
+          name: terraform init
+          path: /home/circleci/project/infrastructure
+          command: export LATEST_IMAGE_TAG="$(aws ecr describe-images --repository-name django-app --region ${REGION} --query 'sort_by(imageDetails,& imagePushedAt)[-1].imageTags[0]' --output text)" && terraform init -var="certificate_arn=$CERTIFICATE_ARN" -var="account_id=$ACCOUNT_ID" -var="region=$REGION" -var="ecr_uri=${ECR_URI}:${LATEST_IMAGE_TAG}" -backend-config="bucket=$BUCKET" -backend-config="key=$FOLDER/terraform.tfstate"
+
+
+      - run:
+          name: Run tests
+          path: /home/circleci/project/infrastructure
+          command: go test -v 
+
+
+
+
+  image-push-and-test:
+
+    executor: aws-ecr/default
+    steps:
+
+      - checkout
+
+      - aws-ecr/build-and-push-image:
+
+          aws-cli-version: latest
+          dockerfile: Dockerfile
+          path: sample-django/
+          public-registry: false
+          push-image: true
+          region: '${REGION}'
+          registry-id: ACCOUNT_ID
+          repo: '${REPO_NAME}'
+          tag: 'latest-${CIRCLE_PROJECT_REPONAME}-${CIRCLE_SHA1}'
+
+
+      - run:
+          name: Image dive
+          command: sudo docker run --rm -it -v /var/run/docker.sock:/var/run/docker.sock wagoodman/dive:latest --ci --highestWastedBytes 20971520 ${ECR_URI}:latest-${CIRCLE_PROJECT_REPONAME}-${CIRCLE_SHA1}
+
+
+
+
+  terraform-destroy:
+
+    executor: aws-ecr/default
+
+    steps:
+
+      - checkout
+
+
+      - run: 
+          name: Download Terraform
+          command: wget https://releases.hashicorp.com/terraform/1.3.5/terraform_1.3.5_linux_amd64.zip
+
+
+      - run:
+          name: Install Terraform
+          command: sudo unzip terraform_1.3.5_linux_amd64.zip -d /usr/local/bin
+
+
+
+      - run:
+          name: terraform init
+          path: /home/circleci/project/infrastructure
+          command: export LATEST_IMAGE_TAG="$(aws ecr describe-images --repository-name django-app --region ${REGION} --query 'sort_by(imageDetails,& imagePushedAt)[-1].imageTags[0]' --output text)" && terraform init -var="certificate_arn=$CERTIFICATE_ARN" -var="account_id=$ACCOUNT_ID" -var="region=$REGION" -var="ecr_uri=${ECR_URI}:${LATEST_IMAGE_TAG}" -backend-config="bucket=$BUCKET" -backend-config="key=$FOLDER/terraform.tfstate"
+
+
+      - run: 
+          name: terraform destroy
+          path: /home/circleci/project/infrastructure
+          command: export LATEST_IMAGE_TAG="$(aws ecr describe-images --repository-name django-app --region ${REGION} --query 'sort_by(imageDetails,& imagePushedAt)[-1].imageTags[0]' --output text)" && terraform destroy -auto-approve -var="certificate_arn=$CERTIFICATE_ARN" -var="account_id=$ACCOUNT_ID" -var="region=$REGION" -var="ecr_uri=${ECR_URI}:${LATEST_IMAGE_TAG}"
+
+
+
+
+
+
+
+workflows:
+
+  deploy_infrastructure:
+    
+    when: << pipeline.parameters.create-infrastructure >>
+    jobs:
+
+      - terraform-init-validate-plan
+
+
+      - approve-plan:
+          type: approval
+          requires:
+          - terraform-init-validate-plan
+
+
+      - terraform-apply:
+          requires:
+          - approve-plan
+
+
+
+
+  deploy_docker_image:
+
+    when: << pipeline.parameters.update-docker-image >>
+    jobs:
+
+      - terratest
+ 
+
+      - image-push-and-test:
+          requires:
+          - terratest
+
+
+      - approve-image-test:
+          type: approval
+          requires:
+          - image-push-and-test
+
+
+      - terraform-init-validate-plan:
+          requires:
+          - approve-image-test
+
+
+      - approve-plan:
+          type: approval
+          requires:
+          - terraform-init-validate-plan
+
+
+      - terraform-apply:
+          requires:
+          - approve-plan
+
+
+
+
+  delete_infrastructure:
+
+    when: << pipeline.parameters.delete-infrastructure >>
+    jobs:
+
+      - terraform-destroy

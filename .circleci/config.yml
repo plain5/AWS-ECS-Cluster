@@ -1,0 +1,28 @@
+---
+version: '2.1'
+
+setup: true 
+
+orbs:
+  path-filtering: circleci/path-filtering@0.1.3
+      
+
+workflows:
+
+  path_checking:
+
+    jobs:
+
+
+      - path-filtering/filter:
+          name: check-updated-files
+
+          mapping: |
+            infrastructure/.* create-infrastructure true
+            sample-django/.* update-docker-image true
+            delete_infrastructure/.* delete-infrastructure true
+
+          base-revision: main
+          
+          config-path: .circleci/main_config.yml
+        
