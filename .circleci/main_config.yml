@@ -46,7 +46,7 @@ jobs:
       - run:
           name: terraform init
           path: /home/circleci/project/infrastructure
-          command: export LATEST_IMAGE_TAG="$(aws ecr describe-images --repository-name django-app --region ${REGION} --query 'sort_by(imageDetails,& imagePushedAt)[-1].imageTags[0]' --output text)" && terraform init -var="certificate_arn=$CERTIFICATE_ARN" -var="account_id=$ACCOUNT_ID" -var="ecr_uri=${ECR_URI}:${LATEST_IMAGE_TAG}" -var="region=$REGION" -backend-config="bucket=$BUCKET" -backend-config="key=$FOLDER/terraform.tfstate"
+          command: export LATEST_IMAGE_TAG="$(aws ecr describe-images --repository-name ${REPO_NAME} --region ${REGION} --query 'sort_by(imageDetails,& imagePushedAt)[-1].imageTags[0]' --output text)" && terraform init -var="certificate_arn=$CERTIFICATE_ARN" -var="account_id=$ACCOUNT_ID" -var="ecr_uri=${ECR_URI}:${LATEST_IMAGE_TAG}" -var="region=$REGION" -backend-config="bucket=$BUCKET" -backend-config="key=$FOLDER/terraform.tfstate"
 
 
       - run:
@@ -58,7 +58,7 @@ jobs:
       - run:
           name: terraform plan
           path: /home/circleci/project/infrastructure
-          command: export LATEST_IMAGE_TAG="$(aws ecr describe-images --repository-name django-app --region ${REGION} --query 'sort_by(imageDetails,& imagePushedAt)[-1].imageTags[0]' --output text)" && terraform plan -var="certificate_arn=$CERTIFICATE_ARN" -var="region=$REGION" -var="account_id=$ACCOUNT_ID" -var="ecr_uri=${ECR_URI}:${LATEST_IMAGE_TAG}"
+          command: export LATEST_IMAGE_TAG="$(aws ecr describe-images --repository-name ${REPO_NAME} --region ${REGION} --query 'sort_by(imageDetails,& imagePushedAt)[-1].imageTags[0]' --output text)" && terraform plan -var="certificate_arn=$CERTIFICATE_ARN" -var="region=$REGION" -var="account_id=$ACCOUNT_ID" -var="ecr_uri=${ECR_URI}:${LATEST_IMAGE_TAG}"
 
 
 
@@ -84,13 +84,13 @@ jobs:
       - run:
           name: terraform init
           path: /home/circleci/project/infrastructure
-          command: export LATEST_IMAGE_TAG="$(aws ecr describe-images --repository-name django-app --region ${REGION} --query 'sort_by(imageDetails,& imagePushedAt)[-1].imageTags[0]' --output text)" && terraform init -var="certificate_arn=$CERTIFICATE_ARN" -var="region=$REGION" -var="account_id=$ACCOUNT_ID" -var="ecr_uri=${ECR_URI}:${LATEST_IMAGE_TAG}" -backend-config="bucket=$BUCKET" -backend-config="key=$FOLDER/terraform.tfstate"
+          command: export LATEST_IMAGE_TAG="$(aws ecr describe-images --repository-name ${REPO_NAME} --region ${REGION} --query 'sort_by(imageDetails,& imagePushedAt)[-1].imageTags[0]' --output text)" && terraform init -var="certificate_arn=$CERTIFICATE_ARN" -var="region=$REGION" -var="account_id=$ACCOUNT_ID" -var="ecr_uri=${ECR_URI}:${LATEST_IMAGE_TAG}" -backend-config="bucket=$BUCKET" -backend-config="key=$FOLDER/terraform.tfstate"
 
 
       - run:
           name: terraform apply
           path: /home/circleci/project/infrastructure
-          command: export LATEST_IMAGE_TAG="$(aws ecr describe-images --repository-name django-app --region ${REGION} --query 'sort_by(imageDetails,& imagePushedAt)[-1].imageTags[0]' --output text)" && terraform apply -var="certificate_arn=$CERTIFICATE_ARN" -var="account_id=$ACCOUNT_ID" -var="region=$REGION" -var="ecr_uri=${ECR_URI}:${LATEST_IMAGE_TAG}" -auto-approve 
+          command: export LATEST_IMAGE_TAG="$(aws ecr describe-images --repository-name ${REPO_NAME} --region ${REGION} --query 'sort_by(imageDetails,& imagePushedAt)[-1].imageTags[0]' --output text)" && terraform apply -var="certificate_arn=$CERTIFICATE_ARN" -var="account_id=$ACCOUNT_ID" -var="region=$REGION" -var="ecr_uri=${ECR_URI}:${LATEST_IMAGE_TAG}" -auto-approve 
   
 
 
@@ -130,7 +130,7 @@ jobs:
       - run: 
           name: terraform init
           path: /home/circleci/project/infrastructure
-          command: export LATEST_IMAGE_TAG="$(aws ecr describe-images --repository-name django-app --region ${REGION} --query 'sort_by(imageDetails,& imagePushedAt)[-1].imageTags[0]' --output text)" && terraform init -var="certificate_arn=$CERTIFICATE_ARN" -var="account_id=$ACCOUNT_ID" -var="region=$REGION" -var="ecr_uri=${ECR_URI}:${LATEST_IMAGE_TAG}" -backend-config="bucket=$BUCKET" -backend-config="key=$FOLDER/terraform.tfstate"
+          command: export LATEST_IMAGE_TAG="$(aws ecr describe-images --repository-name ${REPO_NAME} --region ${REGION} --query 'sort_by(imageDetails,& imagePushedAt)[-1].imageTags[0]' --output text)" && terraform init -var="certificate_arn=$CERTIFICATE_ARN" -var="account_id=$ACCOUNT_ID" -var="region=$REGION" -var="ecr_uri=${ECR_URI}:${LATEST_IMAGE_TAG}" -backend-config="bucket=$BUCKET" -backend-config="key=$FOLDER/terraform.tfstate"
 
 
       - run:
@@ -191,13 +191,13 @@ jobs:
       - run:
           name: terraform init
           path: /home/circleci/project/infrastructure
-          command: export LATEST_IMAGE_TAG="$(aws ecr describe-images --repository-name django-app --region ${REGION} --query 'sort_by(imageDetails,& imagePushedAt)[-1].imageTags[0]' --output text)" && terraform init -var="certificate_arn=$CERTIFICATE_ARN" -var="account_id=$ACCOUNT_ID" -var="region=$REGION" -var="ecr_uri=${ECR_URI}:${LATEST_IMAGE_TAG}" -backend-config="bucket=$BUCKET" -backend-config="key=$FOLDER/terraform.tfstate"
+          command: export LATEST_IMAGE_TAG="$(aws ecr describe-images --repository-name ${REPO_NAME} --region ${REGION} --query 'sort_by(imageDetails,& imagePushedAt)[-1].imageTags[0]' --output text)" && terraform init -var="certificate_arn=$CERTIFICATE_ARN" -var="account_id=$ACCOUNT_ID" -var="region=$REGION" -var="ecr_uri=${ECR_URI}:${LATEST_IMAGE_TAG}" -backend-config="bucket=$BUCKET" -backend-config="key=$FOLDER/terraform.tfstate"
 
 
       - run: 
           name: terraform destroy
           path: /home/circleci/project/infrastructure
-          command: export LATEST_IMAGE_TAG="$(aws ecr describe-images --repository-name django-app --region ${REGION} --query 'sort_by(imageDetails,& imagePushedAt)[-1].imageTags[0]' --output text)" && terraform destroy -auto-approve -var="certificate_arn=$CERTIFICATE_ARN" -var="account_id=$ACCOUNT_ID" -var="region=$REGION" -var="ecr_uri=${ECR_URI}:${LATEST_IMAGE_TAG}"
+          command: export LATEST_IMAGE_TAG="$(aws ecr describe-images --repository-name ${REPO_NAME} --region ${REGION} --query 'sort_by(imageDetails,& imagePushedAt)[-1].imageTags[0]' --output text)" && terraform destroy -auto-approve -var="certificate_arn=$CERTIFICATE_ARN" -var="account_id=$ACCOUNT_ID" -var="region=$REGION" -var="ecr_uri=${ECR_URI}:${LATEST_IMAGE_TAG}"
 
 
 
